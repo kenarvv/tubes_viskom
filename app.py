@@ -25,8 +25,7 @@ def count_objects(results, class_names):
 st.title("YOLO Object Detection App")
 st.write("Upload an image and detect objects using a custom-trained YOLO model.")
 
-# Sidebar for model path
-# model_path = st.sidebar.text_input("Model Path", "yolov5/runs/train/yolo_trash_quick4/weights/best.pt")
+# Model path is now in the same directory as the app
 model_path = 'best.pt'
 
 default_confidence = st.sidebar.slider("Confidence Threshold", 0.0, 1.0, 0.001)
@@ -68,14 +67,6 @@ if uploaded_file is not None:
     # Handle no detection case
     if len(results.xyxy[0]) == 0:
         st.warning("No objects detected. Check your model or input image.")
-
-# Section for displaying metrics screenshot
-st.write("### Model Metrics")
-st.write("Upload a screenshot of your model's metrics (accuracy, precision, recall, F1-score):")
-metrics_file = st.file_uploader("Upload Metrics Screenshot", type=["jpg", "jpeg", "png"])
-if metrics_file is not None:
-    metrics_image = Image.open(metrics_file)
-    st.image(metrics_image, caption="Model Metrics", use_column_width=True)
 
 # Footer
 st.write("Developed with YOLOv5 and Streamlit.")
