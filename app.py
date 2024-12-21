@@ -26,7 +26,8 @@ st.title("YOLO Object Detection App")
 st.write("Upload an image and detect objects using a custom-trained YOLO model.")
 
 # Sidebar for model path
-model_path = st.sidebar.text_input("Model Path", "yolov5/runs/train/yolo_trash_quick4/weights/best.pt")
+# model_path = st.sidebar.text_input("Model Path", "yolov5/runs/train/yolo_trash_quick4/weights/best.pt")
+model_path = 'best.pt'
 
 default_confidence = st.sidebar.slider("Confidence Threshold", 0.0, 1.0, 0.001)
 
