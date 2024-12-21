@@ -4,8 +4,9 @@ from ultralytics import YOLO
 import os
 
 def load_model(model_path):
-    """Load the YOLO model from the specified path."""
-    return YOLO(model_path)
+    """Load the YOLO model from the specified path with CPU mode."""
+    model = YOLO(model_path).to('cpu')  # Memaksa penggunaan CPU
+    return model
 
 def detect_objects(model, image):
     """Run object detection on the image using the model."""
@@ -35,6 +36,7 @@ if not os.path.exists(model_path):
 else:
     model = load_model(model_path)
     model.overrides["conf"] = default_confidence
+    st.sidebar.write(f"Using device: {model.device}")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
