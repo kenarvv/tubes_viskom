@@ -1,11 +1,13 @@
 import streamlit as st
 from PIL import Image
 from ultralytics import YOLO
+import numpy as np
 import os
+import io
 
 def load_model(model_path):
     """Load the YOLO model from the specified path with CPU mode."""
-    model = YOLO(model_path).to('cpu')  # Memaksa penggunaan CPU
+    model = YOLO(model_path).to('cpu')  # Force the model to use CPU
     return model
 
 def detect_objects(model, image):
@@ -21,6 +23,14 @@ def count_objects(results, class_names):
         if class_id < len(class_names):
             counts[class_names[class_id]] += 1
     return counts
+
+def pil_to_np(image):
+    """Convert PIL Image to NumPy array."""
+    return np.array(image)
+
+def np_to_pil(array):
+    """Convert NumPy array to PIL Image."""
+    return Image.fromarray(array)
 
 # Streamlit app
 st.title("YOLO Object Detection App")
@@ -44,32 +54,37 @@ uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 class_names = ["cardboard", "glass", "plastic", "metal", "paper", "trash"]
 
 if uploaded_file is not None:
+    # Load and display the uploaded image
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
     st.write("Processing...")
 
-    # Object detection
-    results = detect_objects(model, image)
+    # Convert the image to a NumPy array for YOLO
+    image_np = pil_to_np(image)
 
-    # Display results
+    # Run object detection
+    results = detect_objects(model, image_np)
+
+    # Display detection results
     st.write("### Detection Results")
-    detected_image = results[0].plot
-    # Tampilkan gambar hasil deteksi
+    # YOLO generates an image with annotations; convert it to a PIL image for display
+    detected_image_np = results[0].plot()  # Returns an annotated NumPy array
+    detected_image = np_to_pil(detected_image_np)
     st.image(detected_image, caption="Detection Output", use_column_width=True)
 
-    # Hitung objek yang terdeteksi
+    # Count detected objects
     counts = count_objects(results, class_names)
     st.write("### Detected Objects Count")
     for cls, count in counts.items():
         st.write(f"{cls.capitalize()}: {count}")
 
-    # Tampilkan prediksi mentah
+    # Display raw predictions
     st.write("### Raw Predictions")
-    st.write(results[0].boxes.xyxy.cpu().numpy())  # Prediksi dalam format [x1, y1, x2, y2, conf, class_id]
+    st.write(results[0].boxes.xyxy.cpu().numpy())  # Predictions as [x1, y1, x2, y2, conf, class_id]
 
-    # Tangani kasus tanpa deteksi objek
+    # Handle case where no objects are detected
     if len(results[0].boxes) == 0:
         st.warning("No objects detected. Check your model or input image.")
 
 # Footer
-st.write("Developed with YOLOv5 and Streamlit.")
+st.write("Developed with YOLO and Streamlit (without OpenCV).")
