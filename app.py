@@ -1,11 +1,11 @@
 import streamlit as st
 from PIL import Image
-import torch
+from ultralytics import YOLO
 import os
 
 def load_model(model_path):
     """Load the YOLO model from the specified path."""
-    return torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
+    return YOLO(model_path)
 
 def detect_objects(model, image):
     """Run object detection on the image using the model."""
@@ -15,8 +15,8 @@ def detect_objects(model, image):
 def count_objects(results, class_names):
     """Count detected objects by class."""
     counts = {cls: 0 for cls in class_names}
-    for pred in results.xyxy[0]:
-        class_id = int(pred[-1])
+    for pred in results[0].boxes:
+        class_id = int(pred.cls[0])
         if class_id < len(class_names):
             counts[class_names[class_id]] += 1
     return counts
@@ -34,7 +34,7 @@ if not os.path.exists(model_path):
     st.sidebar.error("Model path does not exist. Please provide a valid path.")
 else:
     model = load_model(model_path)
-    model.conf = default_confidence
+    model.overrides["conf"] = default_confidence
 
 # File uploader
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
@@ -48,24 +48,25 @@ if uploaded_file is not None:
 
     # Object detection
     results = detect_objects(model, image)
-    results.print()  # Print results to console for debugging
 
     # Display results
     st.write("### Detection Results")
-    st.image(results.imgs[0], caption="Detection Output", use_column_width=True)
+    detected_image = results[0].plot
+    # Tampilkan gambar hasil deteksi
+    st.image(detected_image, caption="Detection Output", use_column_width=True)
 
-    # Count detected objects
+    # Hitung objek yang terdeteksi
     counts = count_objects(results, class_names)
     st.write("### Detected Objects Count")
     for cls, count in counts.items():
         st.write(f"{cls.capitalize()}: {count}")
 
-    # Display raw predictions
+    # Tampilkan prediksi mentah
     st.write("### Raw Predictions")
-    st.write(results.xyxy[0].numpy())
+    st.write(results[0].boxes.xyxy.cpu().numpy())  # Prediksi dalam format [x1, y1, x2, y2, conf, class_id]
 
-    # Handle no detection case
-    if len(results.xyxy[0]) == 0:
+    # Tangani kasus tanpa deteksi objek
+    if len(results[0].boxes) == 0:
         st.warning("No objects detected. Check your model or input image.")
 
 # Footer
